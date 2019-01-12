@@ -13,6 +13,13 @@
 
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n rooks placed such that none of them can attack each other
 
+window.timer = function(cb, ...args) {
+  var startTime = Date.now();
+  cb(...args);
+  var endTime = Date.now();
+  console.log(`Function took ${endTime - startTime}ms to run!`);
+};
+
 window.getSolutions = function(type, n, maxSolutions = Infinity) {
   var solutions = [];
   var startingBoard = new Board({n: n});
@@ -29,7 +36,7 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
     return convertIndexToCoord(convertCoordToIndex(x, y) + 1);
   };
 
-  var rFindSolution = function(remainingN, currentBoard, startIndex = 0) {
+  var rFindSolution = function(piecesPlaced, currentBoard, startIndex = 0) {
     // Inner recursive function
     // Purpose: add viable solutions to solutions array
     // Inputs: remaining pieces to place, current board piece placement
@@ -40,11 +47,16 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
     //  Else push board with solution into solutions array, or just return
     // Recursive case: rFindSolution(...);
     var coord = convertIndexToCoord(startIndex);
-    console.log(`Starting recursive loop ${remainingN}, startingIndex = ${startIndex}, coord = ${coord}`);
+    console.log(`piecesPlaced = ${piecesPlaced}, startingIndex = ${startIndex}, coord = ${coord}`);
     // Base case (solution found): no remaining n, but passed all previous checks
-    if (remainingN === 0) {
+    if (piecesPlaced === n) {
       console.log(`solution push`);
-      solutions.push(currentBoard.rows());
+      solutions.push(currentBoard.rows().map(function(row) {
+        return row.slice(0);
+      }));
+
+      // Backtrack
+      currentBoard.togglePiece(...convertIndexToCoord(startIndex - 1));
       return;
     }
 
@@ -54,20 +66,21 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
       if (solutions.length >= maxSolutions) {
         return;
       }
-      var workingBoard = new Board(currentBoard.rows().map(function(row) {
-        return row.slice(0);
-      }));
 
       // Toggle piece
-      workingBoard.togglePiece(x, y);
+      currentBoard.togglePiece(x, y);
 
       // Check helper functions if valid placement
       if (type === 'rooks') {
-        if (workingBoard.hasAnyRooksConflicts()) {
+        if (currentBoard.hasAnyRooksConflicts()) {
+          // Backtrack
+          currentBoard.togglePiece(x, y);
           continue;
         }
       } else if (type === 'queens') {
-        if (workingBoard.hasAnyQueensConflicts()) {
+        if (currentBoard.hasAnyQueensConflicts()) {
+          // Backtrack
+          currentBoard.togglePiece(x, y);
           continue;
         }
       } else {
@@ -75,14 +88,17 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
       }
 
       // Recursing
-      rFindSolution(remainingN - 1, workingBoard, i + 1);
+      rFindSolution(piecesPlaced + 1, currentBoard, i + 1);
+
+      // Backtrack
+      currentBoard.togglePiece(x, y);
     }
   };
-  rFindSolution(n, startingBoard);
+  rFindSolution(0, startingBoard);
 
-  // if (solutions.length === 0) {
-  //   solutions.push(new Board({n:n}));
-  // }
+  if (solutions.length === 0) {
+    solutions.push((new Board({n: n})).rows());
+  }
   return solutions;
 };
 
