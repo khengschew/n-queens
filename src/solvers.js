@@ -62,7 +62,6 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
       }));
 
       // Backtrack
-      currentBoard.togglePiece(...convertIndexToCoord(startIndex - 1));
       return;
     }
 
