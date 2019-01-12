@@ -100,6 +100,12 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
       currentBoard.togglePiece(x, y);
     }
   };
+
+  if (n <= 0) {
+    solutions.push((new Board({n: n})).rows());
+    return solutions;
+  }
+
   rFindSolution(0, startingBoard);
 
   if (solutions.length === 0) {
