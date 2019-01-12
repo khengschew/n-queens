@@ -15,9 +15,21 @@
 
 window.getSolutions = function(type, n, maxSolutions = Infinity) {
   var solutions = [];
-  var startingBoard = new Board({n:n});
+  var startingBoard = new Board({n: n});
 
-  var rFindSolution = function(remainingN, currentBoard, rowIndex = 0, colIndex = 0) {
+  var convertIndexToCoord = function(index) {
+    return [Math.floor(index / n), index % n];
+  };
+
+  var convertCoordToIndex = function (x, y) {
+    return (x * n) + y;
+  };
+
+  var incrementCoord = function (x, y) {
+    return convertIndexToCoord(convertCoordToIndex(x, y) + 1);
+  };
+
+  var rFindSolution = function(remainingN, currentBoard, startIndex = 0) {
     // Inner recursive function
     // Purpose: add viable solutions to solutions array
     // Inputs: remaining pieces to place, current board piece placement
@@ -27,57 +39,43 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
     //  Check solutions array length, if >= maxSolutions, return
     //  Else push board with solution into solutions array, or just return
     // Recursive case: rFindSolution(...);
-
+    var coord = convertIndexToCoord(startIndex);
+    console.log(`Starting recursive loop ${remainingN}, startingIndex = ${startIndex}, coord = ${coord}`);
     // Base case (solution found): no remaining n, but passed all previous checks
     if (remainingN === 0) {
+      console.log(`solution push`);
       solutions.push(currentBoard.rows());
       return;
     }
 
-    // Recursive case:
-    for (var i = rowIndex; i < n; i++) {
-      for (var j = colIndex; j < n; j++) {
-        if (solutions.length >= maxSolutions) {
-          return;
-        }
-        var workingBoard = new Board(currentBoard.rows().map(function(row) {
-          return row.slice(0);
-        }));
-
-        // if (workingBoard.get(i)[j] !== 1) {
-          workingBoard.togglePiece(i, j);
-        // } else {
-        //   return;
-        // }
-
-        // Check helper functions if valid placement
-        if (type === 'rooks') {
-          if (workingBoard.hasAnyRooksConflicts()) {
-            continue;
-          }
-        } else if (type === 'queens') {
-          if (workingBoard.hasAnyQueensConflicts()) {
-            continue;
-          }
-        } else {
-          return;
-        }
-
-        // Logic to increment
-        var newColIndex = j + 1;
-        if (newColIndex >= n) {
-          newColIndex = 0;
-          var newRowIndex = i + 1;
-        }
-        if (newRowIndex > n) {
-          return;
-        }
-
-        // Recursing
-        //debugger;
-        rFindSolution(remainingN - 1, workingBoard, newRowIndex, newColIndex);
-        // rFindSolution(remainingN - 1, workingBoard, i, j);
+    for (var i = startIndex; i < n * n; i++) {
+      var [x, y] = convertIndexToCoord(i);
+      console.log(`x = ${x}, y = ${y}`);
+      if (solutions.length >= maxSolutions) {
+        return;
       }
+      var workingBoard = new Board(currentBoard.rows().map(function(row) {
+        return row.slice(0);
+      }));
+
+      // Toggle piece
+      workingBoard.togglePiece(x, y);
+
+      // Check helper functions if valid placement
+      if (type === 'rooks') {
+        if (workingBoard.hasAnyRooksConflicts()) {
+          continue;
+        }
+      } else if (type === 'queens') {
+        if (workingBoard.hasAnyQueensConflicts()) {
+          continue;
+        }
+      } else {
+        return;
+      }
+
+      // Recursing
+      rFindSolution(remainingN - 1, workingBoard, i + 1);
     }
   };
   rFindSolution(n, startingBoard);
