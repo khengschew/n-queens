@@ -66,6 +66,7 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
       return;
     }
 
+    // for (var i = startIndex; i < Math.min(((Math.floor(startIndex) + 1) * n), n * n); i++) {
     for (var i = startIndex; i < n * n; i++) {
       var [x, y] = convertIndexToCoord(i);
       console.log(`x = ${x}, y = ${y}`);
@@ -95,6 +96,7 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
 
       // Recursing
       rFindSolution(piecesPlaced + 1, currentBoard, i + 1);
+      // rFindSolution(piecesPlaced + 1, currentBoard, convertCoordToIndex(x + 1, 0));
 
       // Backtrack
       currentBoard.togglePiece(x, y);
