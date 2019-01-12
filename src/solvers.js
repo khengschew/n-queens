@@ -86,9 +86,9 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
   };
   rFindSolution(n, startingBoard);
 
-  // if (solutions.length === 0) {
-  //   solutions.push(new Board({n:n}));
-  // }
+  if (solutions.length === 0) {
+    solutions.push((new Board({n: n})).rows());
+  }
   return solutions;
 };
 
