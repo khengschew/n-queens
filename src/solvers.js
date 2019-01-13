@@ -19,7 +19,7 @@ window.timer = function(cb, ...args) {
   console.log(`Function took ${endTime - startTime}ms to run!`);
 };
 
-window.getSolutions = function(type, n, maxSolutions = Infinity) {
+window.getSolutions = function(type, n, countsOnly = true, maxSolutions = Infinity) {
   var solutions = [];
   var count = 0;
   var startingBoard = new Board({n: n});
@@ -51,20 +51,22 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
     // Base case (solution found): no remaining n, but passed all previous checks
     if (piecesPlaced === n) {
       // console.log(`solution push`);
-      solutions.push(currentBoard.rows().map(function(row) {
-        return row.slice(0);
-      }));
+      if (!countsOnly) {
+        solutions.push(currentBoard.rows().map(function(row) {
+          return row.slice(0);
+        }));
+      }
       count++;
 
       // Backtrack
       return;
     }
 
-    // for (var i = startIndex; i < Math.min(((Math.floor(startIndex) + 1) * n), n * n); i++) {
-    for (var i = startIndex; i < n * n; i++) {
+    for (var i = startIndex; i < Math.min(((Math.floor(startIndex / n) + 1) * n), n * n); i++) {
+    // for (var i = startIndex; i < n * n; i++) {
       var [x, y] = convertIndexToCoord(i);
       // console.log(`x = ${x}, y = ${y}`);
-      if (solutions.length >= maxSolutions) {
+      if (count >= maxSolutions) {
         return;
       }
 
@@ -89,8 +91,8 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
       }
 
       // Recursing
-      rFindSolution(piecesPlaced + 1, currentBoard, i + 1);
-      // rFindSolution(piecesPlaced + 1, currentBoard, convertCoordToIndex(x + 1, 0));
+      // rFindSolution(piecesPlaced + 1, currentBoard, i + 1);
+      rFindSolution(piecesPlaced + 1, currentBoard, convertCoordToIndex(x + 1, 0));
 
       // Backtrack
       currentBoard.togglePiece(x, y);
@@ -111,7 +113,7 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
 };
 
 window.findNRooksSolution = function(n) {
-  var solution = getSolutions('rooks', n, 1).solutions[0];
+  var solution = getSolutions('rooks', n, false, 1).solutions[0];
 
   console.log('Single solution for ' + n + ' rooks:', JSON.stringify(solution));
   return solution;
@@ -127,7 +129,7 @@ window.countNRooksSolutions = function(n) {
 
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n queens placed such that none of them can attack each other
 window.findNQueensSolution = function(n) {
-  var solution = getSolutions('queens', n, 1).solutions[0];
+  var solution = getSolutions('queens', n, false, 1).solutions[0];
 
   console.log('Single solution for ' + n + ' queens:', JSON.stringify(solution));
   return solution;
