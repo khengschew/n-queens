@@ -10,13 +10,6 @@
 // (There are also optimizations that will allow you to skip a lot of the dead search space)
 // take a look at solversSpec.js to see what the tests are expecting
 
-window.timer = function(cb, ...args) {
-  var startTime = Date.now();
-  cb(...args);
-  var endTime = Date.now();
-  console.log(`Function took ${endTime - startTime}ms to run!`);
-};
-
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n rooks placed such that none of them can attack each other
 
 window.timer = function(cb, ...args) {
@@ -28,6 +21,7 @@ window.timer = function(cb, ...args) {
 
 window.getSolutions = function(type, n, maxSolutions = Infinity) {
   var solutions = [];
+  var count = 0;
   var startingBoard = new Board({n: n});
 
   var convertIndexToCoord = function(index) {
@@ -53,13 +47,14 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
     //  Else push board with solution into solutions array, or just return
     // Recursive case: rFindSolution(...);
     var coord = convertIndexToCoord(startIndex);
-    console.log(`piecesPlaced = ${piecesPlaced}, startingIndex = ${startIndex}, coord = ${coord}`);
+    // console.log(`piecesPlaced = ${piecesPlaced}, startingIndex = ${startIndex}, coord = ${coord}`);
     // Base case (solution found): no remaining n, but passed all previous checks
     if (piecesPlaced === n) {
-      console.log(`solution push`);
+      // console.log(`solution push`);
       solutions.push(currentBoard.rows().map(function(row) {
         return row.slice(0);
       }));
+      count++;
 
       // Backtrack
       return;
@@ -68,7 +63,7 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
     // for (var i = startIndex; i < Math.min(((Math.floor(startIndex) + 1) * n), n * n); i++) {
     for (var i = startIndex; i < n * n; i++) {
       var [x, y] = convertIndexToCoord(i);
-      console.log(`x = ${x}, y = ${y}`);
+      // console.log(`x = ${x}, y = ${y}`);
       if (solutions.length >= maxSolutions) {
         return;
       }
@@ -104,7 +99,7 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
 
   if (n <= 0) {
     solutions.push((new Board({n: n})).rows());
-    return solutions;
+    return {solutions: solutions, count: 1};
   }
 
   rFindSolution(0, startingBoard);
@@ -112,11 +107,11 @@ window.getSolutions = function(type, n, maxSolutions = Infinity) {
   if (solutions.length === 0) {
     solutions.push((new Board({n: n})).rows());
   }
-  return solutions;
+  return {solutions: solutions, count: count};
 };
 
 window.findNRooksSolution = function(n) {
-  var solution = getSolutions('rooks', n, 1)[0];
+  var solution = getSolutions('rooks', n, 1).solutions[0];
 
   console.log('Single solution for ' + n + ' rooks:', JSON.stringify(solution));
   return solution;
@@ -124,7 +119,7 @@ window.findNRooksSolution = function(n) {
 
 // return the number of nxn chessboards that exist, with n rooks placed such that none of them can attack each other
 window.countNRooksSolutions = function(n) {
-  var solutionCount = getSolutions('rooks', n).length;
+  var solutionCount = getSolutions('rooks', n).count;
 
   console.log('Number of solutions for ' + n + ' rooks:', solutionCount);
   return solutionCount;
@@ -132,7 +127,7 @@ window.countNRooksSolutions = function(n) {
 
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n queens placed such that none of them can attack each other
 window.findNQueensSolution = function(n) {
-  var solution = getSolutions('queens', n, 1)[0];
+  var solution = getSolutions('queens', n, 1).solutions[0];
 
   console.log('Single solution for ' + n + ' queens:', JSON.stringify(solution));
   return solution;
@@ -140,7 +135,7 @@ window.findNQueensSolution = function(n) {
 
 // return the number of nxn chessboards that exist, with n queens placed such that none of them can attack each other
 window.countNQueensSolutions = function(n) {
-  var solutionCount = 0;
+  var solutionCount = getSolutions('queens', n).count;
 
   console.log('Number of solutions for ' + n + ' queens:', solutionCount);
   return solutionCount;
