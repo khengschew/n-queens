@@ -13,11 +13,87 @@
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n rooks placed such that none of them can attack each other
 
 // Define new board class
+var newBoard = function(obj) {
+  this.n = obj.n;
+  this.rows = _(_.range(n)).map(function() {
+    return -1;
+  });
+};
 
-window.newBoard = function() {
+newBoard.prototype.togglePiece = function (rowIndex, colIndex) {
+  // Shouldn't use this method. Instead, set the value directly
+  this.rows[rowIndex] = this.rows[rowIndex] > -1 ? -1 : colIndex;
+};
+
+newBoard.prototype.hasAnyRooksConflicts = function () {
+  return this.hasAnyRowConflicts() || this.hasAnyColConflicts();
+};
+
+newBoard.prototype.hasAnyQueensConflicts = function () {
+  return this.hasAnyRooksConflicts() || this.hasAnyMajorDiagonalConflicts() || this.hasAnyMinorDiagonalConflicts();
+};
+
+newBoard.prototype.hasRowConflictAt = function (rowIndex) {
+  // Implementation will never have row conflicts
+  // This is because each rowIndex can only hold 1 value:
+  // The colIndex of the occupied space
+  return false;
+};
+
+newBoard.prototype.hasAnyRowConflicts = function () {
+  // Since each row has no conflicts, board will not have conflicts
+  return false;
+};
+
+newBoard.prototype.hasColConflictAt = function (colIndex) {
+  var counter = 0;
+  for (var i = 0; i < this.n; i++) {
+    if (this.rows[i] === colIndex) {
+      counter++;
+    }
+    if (counter > 1) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+newBoard.prototype.hasAnyColConflicts = function () {
+  for (var i = 0; i < this.n; i++) {
+    if (this.rows.indexOf(this.rows[i], i + 1) > -1) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+newBoard.prototype.hasMajorDiagonalConflictAt = function (majorDiagonalColumnIndexAtFirstRow) {
 
 };
 
+newBoard.prototype.hasAnyMajorDiagonalConflicts = function () {
+
+};
+
+newBoard.prototype.hasMinorDiagonalConflictAt = function () {
+
+};
+
+newBoard.prototype.hasAnyMinorDiagonalConflicts = function () {
+
+};
+
+newBoard.prototype.expandBoard = function () {
+  return this.rows.map(function(colIndex, rowIndex) {
+    return _(_.range(n)).map(function(currCol) {
+      return currCol === colIndex ? 1 : 0;
+    });
+  });
+};
+
+// Define timer function
 window.timer = function(cb, ...args) {
   var startTime = Date.now();
   cb(...args);
@@ -25,6 +101,7 @@ window.timer = function(cb, ...args) {
   console.log(`Function took ${endTime - startTime}ms to run!`);
 };
 
+// Define solutions functions
 window.getSolutions = function(type, n, countsOnly = true, maxSolutions = Infinity) {
   var solutions = [];
   var count = 0;
