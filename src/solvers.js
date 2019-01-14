@@ -12,6 +12,12 @@
 
 // return a matrix (an array of arrays) representing a single nxn chessboard, with n rooks placed such that none of them can attack each other
 
+// Define new board class
+
+window.newBoard = function() {
+
+};
+
 window.timer = function(cb, ...args) {
   var startTime = Date.now();
   cb(...args);
