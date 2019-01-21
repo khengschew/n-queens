@@ -15,14 +15,21 @@
 // Define new board class
 var newBoard = function(obj) {
   this.n = obj.n;
-  this.rows = _(_.range(n)).map(function() {
-    return -1;
+  this.grid = _(_.range(this.n)).map(function() {
+    return undefined;
   });
+};
+
+newBoard.prototype.rows = function () {
+  return this.grid;
 };
 
 newBoard.prototype.togglePiece = function (rowIndex, colIndex) {
   // Shouldn't use this method. Instead, set the value directly
-  this.rows[rowIndex] = this.rows[rowIndex] > -1 ? -1 : colIndex;
+  // Bug: toggle will replace the value with undefined,
+  // even if we want to replace with value
+  var newValue = this.grid[rowIndex] === undefined || this.grid[rowIndex] !== colIndex ? colIndex : undefined;
+  this.grid[rowIndex] = newValue;
 };
 
 newBoard.prototype.hasAnyRooksConflicts = function () {
@@ -48,7 +55,7 @@ newBoard.prototype.hasAnyRowConflicts = function () {
 newBoard.prototype.hasColConflictAt = function (colIndex) {
   var counter = 0;
   for (var i = 0; i < this.n; i++) {
-    if (this.rows[i] === colIndex) {
+    if (this.grid[i] === colIndex) {
       counter++;
     }
     if (counter > 1) {
@@ -61,7 +68,7 @@ newBoard.prototype.hasColConflictAt = function (colIndex) {
 
 newBoard.prototype.hasAnyColConflicts = function () {
   for (var i = 0; i < this.n; i++) {
-    if (this.rows.indexOf(this.rows[i], i + 1) > -1) {
+    if (this.grid[i] !== undefined && this.grid.indexOf(this.grid[i], i + 1) > -1) {
       return true;
     }
   }
@@ -70,28 +77,174 @@ newBoard.prototype.hasAnyColConflicts = function () {
 };
 
 newBoard.prototype.hasMajorDiagonalConflictAt = function (majorDiagonalColumnIndexAtFirstRow) {
-
+  var counter = 0;
+  for (var i = 0; i < this.n; i++) {
+    if (this.grid[i] === i + majorDiagonalColumnIndexAtFirstRow) {
+      counter++;
+    }
+    if (counter > 1) {
+      return true;
+    }
+  }
+  return false;
 };
 
 newBoard.prototype.hasAnyMajorDiagonalConflicts = function () {
+  var i = -this.n + 1;
+  var hasConflicts = false;
+  while (!hasConflicts && i < this.n) {
+    hasConflicts = this.hasMajorDiagonalConflictAt(i);
 
+    i++;
+  }
+
+  return hasConflicts;
 };
 
-newBoard.prototype.hasMinorDiagonalConflictAt = function () {
-
+newBoard.prototype.hasMinorDiagonalConflictAt = function (minorDiagonalColumnIndexAtFirstRow) {
+  var counter = 0;
+  for (var i = 0; i < this.n; i++) {
+    if (this.grid[i] === minorDiagonalColumnIndexAtFirstRow - i) {
+      counter++;
+    }
+    if (counter > 1) {
+      return true;
+    }
+  }
+  return false;
 };
 
 newBoard.prototype.hasAnyMinorDiagonalConflicts = function () {
+  var i = 0;
+  var hasConflicts = false;
+  while (!hasConflicts && i < (this.n * 2) - 1) {
+    hasConflicts = this.hasMinorDiagonalConflictAt(i);
 
+    i++;
+  }
+
+  return hasConflicts;
 };
 
 newBoard.prototype.expandBoard = function () {
-  return this.rows.map(function(colIndex, rowIndex) {
-    return _(_.range(n)).map(function(currCol) {
-      return currCol === colIndex ? 1 : 0;
-    });
-  });
+  // return this.grid.map(function(colIndex, rowIndex) {
+  //   return _(_.range(this.n)).map(function(currCol) {
+  //     return currCol === colIndex ? 1 : 0;
+  //   });
+  // });
+  var retBoard = [];
+
+  for (var i = 0; i < this.n; i++) {
+    var retRow = [];
+    for (var j = 0; j < this.n; j++) {
+      retRow.push(this.grid[i] === j ? 1 : 0);
+    }
+
+    retBoard.push(retRow);
+  }
+
+  return retBoard;
 };
+
+/*
+board tests:
+
+var test = newBoard({n:5});
+console.log(test.hasRowConflictAt(0)); // false
+console.log(test.hasRowConflictAt(1)); // false
+console.log(test.hasAnyRowConflicts()); // false
+console.log(test.hasColConflictAt(0)); // false
+console.log(test.hasColConflictAt(1)); // false
+console.log(test.hasAnyColConflicts()); // false
+console.log(test.hasMajorDiagonalConflictAt(-1)); // false
+console.log(test.hasMajorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMajorDiagonalConflicts()); // false
+console.log(test.hasMinorDiagonalConflictAt(6)); // false
+console.log(test.hasMinorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMinorDiagonalConflicts()); // false
+
+test.togglePiece(0, 1);
+console.log(test.hasRowConflictAt(0)); // false
+console.log(test.hasRowConflictAt(1)); // false
+console.log(test.hasAnyRowConflicts()); // false
+console.log(test.hasColConflictAt(0)); // false
+console.log(test.hasColConflictAt(1)); // false
+console.log(test.hasAnyColConflicts()); // false
+console.log(test.hasMajorDiagonalConflictAt(-1)); // false
+console.log(test.hasMajorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMajorDiagonalConflicts()); // false
+console.log(test.hasMinorDiagonalConflictAt(6)); // false
+console.log(test.hasMinorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMinorDiagonalConflicts()); // false
+
+// Test row conflict
+test.togglePiece(0, 2);
+console.log(test.hasRowConflictAt(0)); // false
+console.log(test.hasRowConflictAt(1)); // false
+console.log(test.hasAnyRowConflicts()); // false
+console.log(test.hasColConflictAt(0)); // false
+console.log(test.hasColConflictAt(1)); // false
+console.log(test.hasAnyColConflicts()); // false
+console.log(test.hasMajorDiagonalConflictAt(-1)); // false
+console.log(test.hasMajorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMajorDiagonalConflicts()); // false
+console.log(test.hasMinorDiagonalConflictAt(6)); // false
+console.log(test.hasMinorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMinorDiagonalConflicts()); // false
+
+// Test col conflict
+test.togglePiece(0, 1);
+test.togglePiece(2, 1);
+console.log(test.hasRowConflictAt(0)); // false
+console.log(test.hasRowConflictAt(1)); // false
+console.log(test.hasAnyRowConflicts()); // false
+console.log(test.hasColConflictAt(0)); // false
+console.log(test.hasColConflictAt(1)); // true
+console.log(test.hasAnyColConflicts()); // true
+console.log(test.hasMajorDiagonalConflictAt(-1)); // false
+console.log(test.hasMajorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMajorDiagonalConflicts()); // false
+console.log(test.hasMinorDiagonalConflictAt(6)); // false
+console.log(test.hasMinorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMinorDiagonalConflicts()); // false
+
+// Test major diag conflict
+test.togglePiece(1, 2);
+console.log(test.hasRowConflictAt(0)); // false
+console.log(test.hasRowConflictAt(1)); // false
+console.log(test.hasAnyRowConflicts()); // false
+console.log(test.hasColConflictAt(0)); // false
+console.log(test.hasColConflictAt(1)); // false
+console.log(test.hasAnyColConflicts()); // false
+console.log(test.hasMajorDiagonalConflictAt(-1)); // false
+console.log(test.hasMajorDiagonalConflictAt(1)); // true
+console.log(test.hasAnyMajorDiagonalConflicts()); // true
+console.log(test.hasMinorDiagonalConflictAt(6)); // false
+console.log(test.hasMinorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMinorDiagonalConflicts()); // false
+
+// Test minor diag conflict
+test.togglePiece(1, 0);
+console.log(test.hasRowConflictAt(0)); // false
+console.log(test.hasRowConflictAt(1)); // false
+console.log(test.hasAnyRowConflicts()); // false
+console.log(test.hasColConflictAt(0)); // false
+console.log(test.hasColConflictAt(1)); // false
+console.log(test.hasAnyColConflicts()); // false
+console.log(test.hasMajorDiagonalConflictAt(-1)); // false
+console.log(test.hasMajorDiagonalConflictAt(1)); // false
+console.log(test.hasAnyMajorDiagonalConflicts()); // false
+console.log(test.hasMinorDiagonalConflictAt(6)); // false
+console.log(test.hasMinorDiagonalConflictAt(1)); // true
+console.log(test.hasAnyMinorDiagonalConflicts()); // true
+
+var test = new newBoard({n:3});
+test.togglePiece(0,2);
+test.togglePiece(1,0);
+test.togglePiece(2,1);
+console.log(test.hasAnyMajorDiagonalConflicts()); // true
+console.log(test.hasMajorDiagonalConflictAt(-1)); // true
+*/
 
 // Define timer function
 window.timer = function(cb, ...args) {
@@ -105,7 +258,9 @@ window.timer = function(cb, ...args) {
 window.getSolutions = function(type, n, countsOnly = true, maxSolutions = Infinity) {
   var solutions = [];
   var count = 0;
-  var startingBoard = new Board({n: n});
+  // var startingBoard = new Board({n: n});
+  var startingBoard = new newBoard({n: n});
+
 
   var convertIndexToCoord = function(index) {
     return [Math.floor(index / n), index % n];
@@ -130,14 +285,18 @@ window.getSolutions = function(type, n, countsOnly = true, maxSolutions = Infini
     //  Else push board with solution into solutions array, or just return
     // Recursive case: rFindSolution(...);
     var coord = convertIndexToCoord(startIndex);
-    // console.log(`piecesPlaced = ${piecesPlaced}, startingIndex = ${startIndex}, coord = ${coord}`);
+    // console.log(`n = ${this.n}, piecesPlaced = ${piecesPlaced}, startingIndex = ${startIndex}, coord = ${coord}`);
     // Base case (solution found): no remaining n, but passed all previous checks
     if (piecesPlaced === n) {
-      // console.log(`solution push`);
+      // console.log(`solution push: ${currentBoard.rows()}`);
       if (!countsOnly) {
-        solutions.push(currentBoard.rows().map(function(row) {
-          return row.slice(0);
-        }));
+        // Original board solution
+        // solutions.push(currentBoard.rows().map(function(row) {
+        //   return row.slice(0);
+        // }));
+
+        // New board solution
+        solutions.push(currentBoard.expandBoard());
       }
       count++;
 
@@ -148,7 +307,7 @@ window.getSolutions = function(type, n, countsOnly = true, maxSolutions = Infini
     for (var i = startIndex; i < Math.min(((Math.floor(startIndex / n) + 1) * n), n * n); i++) {
     // for (var i = startIndex; i < n * n; i++) {
       var [x, y] = convertIndexToCoord(i);
-      // console.log(`x = ${x}, y = ${y}`);
+      // console.log(`x = ${x}, y = ${y}, board = ${JSON.stringify(currentBoard.rows())}`);
       if (count >= maxSolutions) {
         return;
       }
@@ -174,7 +333,7 @@ window.getSolutions = function(type, n, countsOnly = true, maxSolutions = Infini
       }
 
       // Recursing
-      // rFindSolution(piecesPlaced + 1, currentBoard, i + 1);
+      // console.log(`passed check, recursing to ${convertCoordToIndex(x + 1, 0)}`);
       rFindSolution(piecesPlaced + 1, currentBoard, convertCoordToIndex(x + 1, 0));
 
       // Backtrack
@@ -183,14 +342,23 @@ window.getSolutions = function(type, n, countsOnly = true, maxSolutions = Infini
   };
 
   if (n <= 0) {
-    solutions.push((new Board({n: n})).rows());
+    // Original board solution
+    // solutions.push((new Board({n: n})).rows());
+
+    // New board solution
+    solutions.push((new newBoard({n: n})).expandBoard());
+
     return {solutions: solutions, count: 1};
   }
 
   rFindSolution(0, startingBoard);
 
   if (solutions.length === 0) {
-    solutions.push((new Board({n: n})).rows());
+    // Original board solution
+    // solutions.push((new Board({n: n})).rows());
+
+    // New board solution
+    solutions.push((new newBoard({n: n})).expandBoard());
   }
   return {solutions: solutions, count: count};
 };
